@@ -1,0 +1,18 @@
+get https://www.base64encode.org/
+elem  ${BY_ID} "input"
+clear #{-1}
+type  #{-1} "hyhecor"
+
+elem  ${BY_ID} "submit_text"
+click #{-1}
+
+elem ${BY_ID} "output"
+text #{-1}
+
+get https://www.base64decode.org/
+elem  ${BY_ID} "input"
+clear #{-1}
+type  #{-1} #{-2}
+
+elem  ${BY_ID} "submit_text"
+click #{-1}

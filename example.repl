@@ -1,0 +1,16 @@
+get http://example.com
+elem ${BY_TAG_NAME} "h1"
+
+text #{-1}
+
+get http://google.com
+elem ${BY_CLASS_NAME} "gb_ia"
+click #{-1}
+
+elem ${BY_ID} "identifierId"
+clear #{-1}
+type  #{-1} "hyhecor" ${KEYS_RETURN}
+
+reflash
+
+close
