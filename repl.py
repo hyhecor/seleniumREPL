@@ -2,6 +2,7 @@ import os
 from selenium.webdriver.remote import webdriver as webdriver_
 from selenium.webdriver.remote import webelement
 import argparse
+import sys
 from sys import stdin
 
 # from nltk.tokenize import word_tokenize
@@ -90,24 +91,24 @@ class REPL:
     def text(self, *args: str):
         parser = argparse.ArgumentParser(description="""The text of the element""")
 
-        parser.add_argument("prev", nargs="?", type=str, help="prev")
+        parser.add_argument("elem", nargs="?", type=str, help="elem")
 
         self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
-        elem = self.Value(flag.prev, "-1")
+        elem = self.Value(flag.elem, "-1")
 
         return elem.text
 
     def click(self, *args: str):
         parser = argparse.ArgumentParser(description="""Clicks the element""")
 
-        parser.add_argument("prev", nargs="?", type=str, help="prev")
+        parser.add_argument("elem", nargs="?", type=str, help="elem")
 
         self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
-        elem = self.Value(flag.prev, "-1")
+        elem = self.Value(flag.elem, "-1")
 
         return elem.click()
 
@@ -116,12 +117,12 @@ class REPL:
             description="""Clears the text if it's a text entry element"""
         )
 
-        parser.add_argument("prev", nargs="?", type=str, help="prev")
+        parser.add_argument("elem", nargs="?", type=str, help="elem")
 
         self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
-        elem = self.Value(flag.prev, "-1")
+        elem = self.Value(flag.elem, "-1")
 
         return elem.clear()
 
@@ -130,14 +131,14 @@ class REPL:
             description="""Simulates typing into the element"""
         )
 
-        parser.add_argument("prev", nargs="?", type=str, help="prev")
+        parser.add_argument("elem", nargs="?", type=str, help="elem")
 
         parser.add_argument("value", nargs="?", type=str, help="value")
 
         self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
-        elem = self.Value(flag.prev, "-1")
+        elem = self.Value(flag.elem, "-1")
         value = self.Value(flag.value)
 
         return elem.send_keys(value)
@@ -161,14 +162,16 @@ class REPL:
     def setenv(self, *args: str):
         parser = argparse.ArgumentParser(description="""Set value to os.enviroment""")
 
-        parser.add_argument("value", nargs="?", type=str, help="value")
         parser.add_argument("key", nargs="?", type=str, help="env_key")
+        parser.add_argument("value", nargs="*", type=str, help="value")
 
         self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
-        value = self.Value(flag.value, "-1")
         key = self.Value(flag.key)
+        value = map(self.Value, flag.value)
+        value = tuple(value)
+        value = "\n".join(value)
 
         os.environ["{0}".format(key)] = value
 
@@ -217,8 +220,6 @@ class REPL:
         flag = parser.parse_args(map(lambda x: x, args))
         fmt = self.Value(flag.fmt)
         args = self.Value(flag.args)
-
-        import sys
 
         sys.stdout.write(fmt.format(*args))
         sys.stdout.write("\n")
