@@ -2,6 +2,7 @@ import os
 from selenium.webdriver.remote import webdriver as webdriver_
 from selenium.webdriver.remote import webelement
 import argparse
+from sys import stdin
 
 # from nltk.tokenize import word_tokenize
 # import nltk
@@ -19,16 +20,23 @@ B = "\033[34m"  # blue
 P = "\033[35m"  # purple
 
 
-def printVerbose(msg):
-    print(B + ">> " + msg + W)
-
-
 class REPL:
-    def __init__(self, driver: webdriver_.WebDriver, verbose: bool) -> None:
-        self.memory = []
+    def __init__(
+        self,
+        driver: webdriver_.WebDriver,
+        lineFeed: str,
+        verbose: bool,
+        max_cursor_len: int = 50,
+    ) -> None:
+        self.cursor = []
+        self.max_cursor_len = max_cursor_len
         self.isClosed = False
         self.driver = driver
-        self.verbose = verbose
+        self.lineFeed = lineFeed
+
+        self.verbose = lambda x: x
+        if verbose:
+            self.verbose = lambda x: print(B + ">> " + x + W)
 
     def get(self, *args: str):
         parser = argparse.ArgumentParser(
@@ -37,8 +45,7 @@ class REPL:
 
         parser.add_argument("url", nargs="?", type=str, help="url")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
         url = self.Value(flag.url)
@@ -48,8 +55,7 @@ class REPL:
     def close(self, *args: str):
         parser = argparse.ArgumentParser(description="""Closes the current window""")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         self.driver.close()
         self.isClosed = True
@@ -59,8 +65,7 @@ class REPL:
             description="""Quits the driver and closes every associated window"""
         )
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         self.driver.quit()
         self.isClosed = True
@@ -74,8 +79,7 @@ class REPL:
 
         parser.add_argument("value", nargs="?", type=str, help="value: str")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
         by = self.Value(flag.by)
@@ -88,8 +92,7 @@ class REPL:
 
         parser.add_argument("prev", nargs="?", type=str, help="prev")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
         elem = self.Value(flag.prev, "-1")
@@ -101,8 +104,7 @@ class REPL:
 
         parser.add_argument("prev", nargs="?", type=str, help="prev")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
         elem = self.Value(flag.prev, "-1")
@@ -116,8 +118,7 @@ class REPL:
 
         parser.add_argument("prev", nargs="?", type=str, help="prev")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
         elem = self.Value(flag.prev, "-1")
@@ -131,23 +132,20 @@ class REPL:
 
         parser.add_argument("prev", nargs="?", type=str, help="prev")
 
-        parser.add_argument("value", nargs="*", type=str, help="prev")
+        parser.add_argument("value", nargs="?", type=str, help="value")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
         elem = self.Value(flag.prev, "-1")
-        value = map(self.Value, flag.value)
-        value = tuple(value)
+        value = self.Value(flag.value)
 
         return elem.send_keys(value)
 
     def refresh(self, *args: str):
         parser = argparse.ArgumentParser(description="""Refreshes the current page""")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         self.driver.refresh()
 
@@ -156,8 +154,7 @@ class REPL:
             description="""Gets the URL of the current page"""
         )
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         return self.driver.current_url
 
@@ -165,16 +162,74 @@ class REPL:
         parser = argparse.ArgumentParser(description="""Set value to os.enviroment""")
 
         parser.add_argument("value", nargs="?", type=str, help="value")
-        parser.add_argument("key", nargs="?", type=str, help="key")
+        parser.add_argument("key", nargs="?", type=str, help="env_key")
 
-        if self.verbose:
-            printVerbose("{0} args={1}".format(parser.description, args))
+        self.verbose("{0} args={1}".format(parser.description, args))
 
         flag = parser.parse_args(map(lambda x: x, args))
         value = self.Value(flag.value, "-1")
         key = self.Value(flag.key)
 
         os.environ["{0}".format(key)] = value
+
+    def input(self, *args: str):
+        parser = argparse.ArgumentParser(description="""input from stdin""")
+
+        parser.add_argument("value", nargs="*", type=str, help="value")
+
+        self.verbose("{0} args={1}".format(parser.description, args))
+
+        # flag = parser.parse_args(map(lambda x: x, args))
+        # value = map(self.Value, flag.value)
+        # value = tuple(value)
+
+        if 0 < len(args):
+            return " ".join(args)
+
+        buf = ""
+        while True:
+            print("INPUT> ", end="") if len(buf) == 0 else print("> ", end="")
+
+            s = stdin.readline()
+            if not s:
+                print("EOF")
+                break
+
+            s = s.strip(" \r\n")
+
+            end = s[::-1].find(self.lineFeed)
+            if end == 0:
+                buf += s[: -len(self.lineFeed)] + "\n"
+                continue
+            else:
+                buf += s.strip(" ")
+
+                return buf
+
+    def print(self, *args: str):
+        parser = argparse.ArgumentParser(description="""print fmt args""")
+
+        parser.add_argument("fmt", nargs="?", type=str, help="key")
+        parser.add_argument("args", nargs="*", type=str, help="args")
+
+        self.verbose("{0} args={1}".format(parser.description, args))
+
+        flag = parser.parse_args(map(lambda x: x, args))
+        fmt = self.Value(flag.fmt)
+        args = self.Value(flag.args)
+
+        import sys
+
+        sys.stdout.write(fmt.format(*args))
+        sys.stdout.write("\n")
+
+    def func_cursor(self, *args: str):
+        parser = argparse.ArgumentParser(description="""print list of cursor""")
+
+        self.verbose("{0} args={1}".format(parser.description, args))
+
+        for i, it in enumerate(self.cursor):
+            print(G + "[{0}]: {1}".format(i, it) + W)
 
     def Parse(self, s: str):
         args = split(s)
@@ -197,6 +252,10 @@ class REPL:
             "reflash": (self.refresh, False),
             "current_url": (self.current_url, True),
             "setenv": (self.setenv, False),
+            "input": (self.input, True),
+            "print": (self.print, False),
+            "cursor": (self.func_cursor, False),
+            "mem": (self.func_cursor, False),
         }.get(arg0, default)
 
         if fn is None:
@@ -205,7 +264,8 @@ class REPL:
 
         rst = fn(*(args[1:]))
         if memorise:
-            self.memory.append(rst)
+            self.cursor.append(rst)
+            self.cursor = self.cursor[: self.max_cursor_len]  # cursor rotate
 
         return not self.isClosed
 
@@ -220,13 +280,13 @@ class REPL:
         if strip(s).find("#") == 0:
             s = s.strip("# ()\{\}")
 
-            return self.memory[int(s)]
+            return self.cursor[int(s)]
 
         return s
 
 
-def New(driver: webdriver_.WebDriver, verbose: bool = False) -> REPL:
-    return REPL(driver, verbose)
+def New(driver: webdriver_.WebDriver, lineFeed: str, verbose: bool = False) -> REPL:
+    return REPL(driver, lineFeed, verbose)
 
 
 # if __name__ == '__main__':

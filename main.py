@@ -94,8 +94,7 @@ def ExecFile(driver: webdriver_.WebDriver, fileName: str, lineFeed: str = ";"):
 
 
 def REPL(driver: webdriver_.WebDriver, lineFeed: str = "\\"):
-    n = 0
-    exec, buff = Exec(driver, lineFeed)
+    exec, buf = Exec(driver, lineFeed)
 
     # while True:
     #     print('REPL> ', end='') if len(buff()) == 0 else print('> ', end='')
@@ -109,8 +108,8 @@ def REPL(driver: webdriver_.WebDriver, lineFeed: str = "\\"):
     #         break
 
     while True:
-        print("REPL> ", end="") if len(buff()) == 0 else print("> ", end="")
-        n += 1
+        print("REPL> ", end="") if len(buf()) == 0 else print("> ", end="")
+
         line = stdin.readline()
         if not line:
             print("EOF")
@@ -122,7 +121,7 @@ def REPL(driver: webdriver_.WebDriver, lineFeed: str = "\\"):
 
 def Exec(driver: webdriver_.WebDriver, lineFeed: str = "\\"):
     buf = ""
-    repl_ = repl.New(driver, True)
+    repl_ = repl.New(driver, lineFeed, True)
 
     def exec(s: str):
         nonlocal buf
